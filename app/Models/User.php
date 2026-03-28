@@ -24,6 +24,11 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'age',
+        'weight',
+        'height',
+        'city',
+        'photo',
         'role_id',
     ];
 
@@ -47,7 +52,55 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'weight' => 'float',
+            'height' => 'float',
         ];
+    }
+
+    /**
+     * IMC (kg/m²) — taille en cm en base.
+     */
+    public function bmi(): ?float
+    {
+        if ($this->weight === null || $this->height === null || $this->height <= 0) {
+            return null;
+        }
+
+        $m = $this->height / 100;
+
+        return round($this->weight / ($m * $m), 1);
+    }
+
+    public function bmiCategory(): ?string
+    {
+        $bmi = $this->bmi();
+        if ($bmi === null) {
+            return null;
+        }
+
+        if ($bmi < 18.5) {
+            return 'maigre';
+        }
+        if ($bmi < 25) {
+            return 'normal';
+        }
+        if ($bmi < 30) {
+            return 'surpoids';
+        }
+
+        return 'obésité';
+    }
+
+    /** Libellé français pour l’affichage (IMC). */
+    public function bmiCategoryLabel(): ?string
+    {
+        return match ($this->bmiCategory()) {
+            'maigre' => 'Maigre',
+            'normal' => 'Normal',
+            'surpoids' => 'Surpoids',
+            'obésité' => 'Obésité',
+            default => null,
+        };
     }
 
     public function role(): BelongsTo

@@ -9,13 +9,21 @@ use App\Http\Controllers\Admin\VideoController as AdminVideoController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
+use App\Http\Controllers\Client\CategoryProductController;
 use App\Http\Controllers\Client\HomeController;
 use App\Http\Controllers\Client\NutritionController;
 use App\Http\Controllers\Client\ProfileController;
 use App\Http\Controllers\Client\ProgramController as ClientProgramController;
 use App\Http\Controllers\Client\ProgressController;
+use App\Http\Controllers\Client\ProduitController;
 use App\Http\Controllers\Client\VideoController as ClientVideoController;
 use Illuminate\Support\Facades\Route;
+
+// Fiche « produit » (URL type boutique, hors préfixe /client)
+Route::redirect('/produit/programme-debutant-femme', '/produit/debutant-femme', 301);
+Route::redirect('/debutant-femme', '/produit/debutant-femme', 301);
+Route::get('/produit/{program:slug}', [ProduitController::class, 'show'])->name('client.product.show');
+Route::get('/categorie-produit/{category}', [CategoryProductController::class, 'show'])->name('client.category-products.show');
 
 // Entrée client (toutes les URLs client passent sous /client)
 Route::redirect('/', '/client');
@@ -26,6 +34,9 @@ Route::prefix('client')->group(function () {
     Route::get('/a-propos', [HomeController::class, 'about'])->name('client.about');
     Route::get('/contact', [HomeController::class, 'contact'])->name('client.contact');
 
+    Route::view('/panier', 'client.cart.index')->name('client.cart');
+    Route::view('/paiement', 'client.checkout.index')->name('client.checkout');
+
     Route::get('/programmes', [ClientProgramController::class, 'index'])->name('client.programs.index');
     Route::get('/programmes/{program}', [ClientProgramController::class, 'show'])->name('client.programs.show');
 
@@ -33,9 +44,11 @@ Route::prefix('client')->group(function () {
 
     Route::get('/nutrition', [NutritionController::class, 'index'])->name('client.nutrition.index');
 
+    // Profil : la page est accessible à tous (formulaire invité + édition connecté) ; seule la mise à jour exige une session.
+    Route::get('/profil', [ProfileController::class, 'show'])->name('client.profile');
+
     Route::middleware('auth')->group(function () {
         Route::get('/espace', [ClientDashboardController::class, 'index'])->name('client.dashboard');
-        Route::get('/profil', [ProfileController::class, 'show'])->name('client.profile');
         Route::put('/profil', [ProfileController::class, 'update'])->name('client.profile.update');
 
         Route::get('/progression', [ProgressController::class, 'index'])->name('client.progress.index');
