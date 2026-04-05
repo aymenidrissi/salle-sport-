@@ -8,7 +8,7 @@
         <section class="relative overflow-hidden">
             <div
                 class="h-64 w-full bg-cover bg-center sm:h-72 lg:h-80"
-                style="background-image: url('{{ asset('images/about-hero-entraineur.png') }}');"
+                style="background-image: url('{{ asset('images/about-team-bg.png') }}');"
                 role="img"
                 aria-hidden="true"
             ></div>

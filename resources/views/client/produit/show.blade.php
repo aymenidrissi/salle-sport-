@@ -11,12 +11,8 @@
                 $youtubeId = $m[1];
             }
         }
-        $mainImage = null;
-        if ($program->image) {
-            $mainImage = \Illuminate\Support\Str::startsWith($program->image, ['http://', 'https://'])
-                ? $program->image
-                : asset('storage/'.$program->image);
-        } elseif ($youtubeId) {
+        $mainImage = $program->publicImageUrl();
+        if (! $mainImage && $youtubeId) {
             $mainImage = 'https://img.youtube.com/vi/'.$youtubeId.'/maxresdefault.jpg';
         }
         $isProduitAmincissementFemme = $program->slug === 'programme-amincissement-et-developpement-musculaire-femme';
@@ -455,12 +451,8 @@
                                         $ryt = $rm[1];
                                     }
                                 }
-                                $relImg = null;
-                                if ($rel->image) {
-                                    $relImg = \Illuminate\Support\Str::startsWith($rel->image, ['http://', 'https://'])
-                                        ? $rel->image
-                                        : asset('storage/'.$rel->image);
-                                } elseif ($ryt) {
+                                $relImg = $rel->publicImageUrl();
+                                if (! $relImg && $ryt) {
                                     $relImg = 'https://img.youtube.com/vi/'.$ryt.'/hqdefault.jpg';
                                 }
                             @endphp

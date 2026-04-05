@@ -97,7 +97,7 @@
                 <div class="mt-6 grid gap-7 sm:grid-cols-2 xl:grid-cols-3">
                     @forelse ($filtered as $program)
                         @php
-                            $img = $program->image ? asset('storage/'.$program->image) : '';
+                            $img = $program->publicImageUrl() ?? '';
                         @endphp
                         <article class="max-w-[280px]">
                             <a href="{{ route('client.product.show', $program) }}" class="block aspect-square overflow-hidden bg-zinc-100">

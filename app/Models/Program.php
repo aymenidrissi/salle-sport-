@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
@@ -20,20 +21,94 @@ class Program extends Model
         'title',
         'slug',
         'description',
+        'video_url',
         'price',
         'image',
+        'is_visible',
     ];
 
     protected function casts(): array
     {
         return [
             'price' => 'decimal:2',
+            'is_visible' => 'boolean',
         ];
     }
 
     public function videos(): HasMany
     {
         return $this->hasMany(Video::class);
+    }
+
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class)
+            ->withPivot('order_id', 'pdf_link')
+            ->withTimestamps();
+    }
+
+    /**
+     * URL affichable pour la vignette / hero (fichier dans storage ou lien http(s)).
+     */
+    public function publicImageUrl(): ?string
+    {
+        $raw = $this->image;
+        if ($raw === null || $raw === '') {
+            return null;
+        }
+
+        $img = trim((string) $raw);
+        if ($img === '') {
+            return null;
+        }
+
+        if (Str::startsWith($img, ['http://', 'https://'])) {
+            return $img;
+        }
+
+        if (Str::startsWith($img, '//')) {
+            return 'https:'.$img;
+        }
+
+        return asset('storage/'.$img);
+    }
+
+    /**
+     * Lien http(s) brut stocké dans `image` (pour affichage bouton PDF / ressource).
+     */
+    public function externalHttpImageField(): ?string
+    {
+        $raw = trim((string) ($this->image ?? ''));
+        if ($raw === '' || ! Str::startsWith($raw, ['http://', 'https://'])) {
+            return null;
+        }
+
+        return $raw;
+    }
+
+    /**
+     * Le champ image pointe vers un fichier non affichable en <img> (ex. PDF).
+     */
+    public function imageFieldIsNonDisplayableHttpResource(): bool
+    {
+        $url = $this->externalHttpImageField();
+        if ($url === null) {
+            return false;
+        }
+
+        return (bool) preg_match('/\.(pdf|docx?|zip)(\?|#|$)/i', $url);
+    }
+
+    /**
+     * URL pour bannière / vignette : exclut PDF et documents (sinon <img> cassé).
+     */
+    public function heroOrCardImageUrl(): ?string
+    {
+        if ($this->imageFieldIsNonDisplayableHttpResource()) {
+            return null;
+        }
+
+        return $this->publicImageUrl();
     }
 
     /** Titre court pour les grilles type boutique (cartes). */

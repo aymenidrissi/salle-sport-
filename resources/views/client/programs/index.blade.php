@@ -36,12 +36,8 @@
                             }
                         }
 
-                        $coverUrl = null;
-                        if ($program->image) {
-                            $coverUrl = \Illuminate\Support\Str::startsWith($program->image, ['http://', 'https://'])
-                                ? $program->image
-                                : asset('storage/'.$program->image);
-                        } elseif ($youtubeId) {
+                        $coverUrl = $program->heroOrCardImageUrl();
+                        if (! $coverUrl && $youtubeId) {
                             $coverUrl = 'https://img.youtube.com/vi/'.$youtubeId.'/hqdefault.jpg';
                         }
                     @endphp

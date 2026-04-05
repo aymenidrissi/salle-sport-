@@ -312,6 +312,13 @@
         </script>
 
         <main class="flex-1">
+            @if (session('warning'))
+                <div class="mx-auto max-w-3xl px-4 pt-6">
+                    <div class="rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-100 shadow-sm">
+                        {{ session('warning') }}
+                    </div>
+                </div>
+            @endif
             @yield('content')
         </main>
 

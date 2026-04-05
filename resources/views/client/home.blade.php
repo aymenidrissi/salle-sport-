@@ -60,9 +60,13 @@
                                     $youtubeId = $m[1];
                                 }
                             }
-                            $coverUrl = $program->image
-                                ? (\Illuminate\Support\Str::startsWith($program->image, ['http://', 'https://']) ? $program->image : asset('storage/'.$program->image))
-                                : ($youtubeId ? 'https://img.youtube.com/vi/'.$youtubeId.'/hqdefault.jpg' : asset('images/home-hero.png'));
+                            $coverUrl = $program->publicImageUrl();
+                            if (! $coverUrl && $youtubeId) {
+                                $coverUrl = 'https://img.youtube.com/vi/'.$youtubeId.'/hqdefault.jpg';
+                            }
+                            if (! $coverUrl) {
+                                $coverUrl = asset('images/home-hero.png');
+                            }
                         @endphp
                         <article class="flex min-h-[360px] flex-col overflow-hidden rounded-lg border border-white/10 bg-zinc-900/40 shadow-xl sm:min-h-[380px]">
                             <div class="relative flex min-h-[200px] flex-1 flex-col justify-end">
@@ -233,9 +237,13 @@
                                     $youtubeId = $m[1];
                                 }
                             }
-                            $thumb = $program->image
-                                ? (\Illuminate\Support\Str::startsWith($program->image, ['http://', 'https://']) ? $program->image : asset('storage/'.$program->image))
-                                : ($youtubeId ? 'https://img.youtube.com/vi/'.$youtubeId.'/hqdefault.jpg' : asset('images/home-hero.png'));
+                            $thumb = $program->publicImageUrl();
+                            if (! $thumb && $youtubeId) {
+                                $thumb = 'https://img.youtube.com/vi/'.$youtubeId.'/hqdefault.jpg';
+                            }
+                            if (! $thumb) {
+                                $thumb = asset('images/home-hero.png');
+                            }
                             $level = $levelCycle[$i % count($levelCycle)];
                             $levelUrl = strtolower($level) === 'confirmé'
                                 ? url('/categorie-produit/confirme')

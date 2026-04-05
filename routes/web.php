@@ -4,18 +4,21 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\NutritionTipController as AdminNutritionTipController;
 use App\Http\Controllers\Admin\ProgramController as AdminProgramController;
 use App\Http\Controllers\Admin\StatisticsController;
+use App\Http\Controllers\Admin\SubscriptionController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\VideoController as AdminVideoController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
 use App\Http\Controllers\Client\CategoryProductController;
+use App\Http\Controllers\Client\CheckoutController;
+use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
 use App\Http\Controllers\Client\HomeController;
 use App\Http\Controllers\Client\NutritionController;
+use App\Http\Controllers\Client\NutritionTipRequestController as ClientNutritionTipRequestController;
+use App\Http\Controllers\Client\ProduitController;
 use App\Http\Controllers\Client\ProfileController;
 use App\Http\Controllers\Client\ProgramController as ClientProgramController;
 use App\Http\Controllers\Client\ProgressController;
-use App\Http\Controllers\Client\ProduitController;
 use App\Http\Controllers\Client\VideoController as ClientVideoController;
 use Illuminate\Support\Facades\Route;
 
@@ -36,6 +39,7 @@ Route::prefix('client')->group(function () {
 
     Route::view('/panier', 'client.cart.index')->name('client.cart');
     Route::view('/paiement', 'client.checkout.index')->name('client.checkout');
+    Route::post('/paiement', [CheckoutController::class, 'store'])->name('client.checkout.store');
 
     Route::get('/programmes', [ClientProgramController::class, 'index'])->name('client.programs.index');
     Route::get('/programmes/{program}', [ClientProgramController::class, 'show'])->name('client.programs.show');
@@ -53,6 +57,8 @@ Route::prefix('client')->group(function () {
 
         Route::get('/progression', [ProgressController::class, 'index'])->name('client.progress.index');
         Route::post('/progression', [ProgressController::class, 'store'])->name('client.progress.store');
+
+        Route::post('/nutrition-tip-requests', [ClientNutritionTipRequestController::class, 'store'])->name('client.nutrition-tip-requests.store');
     });
 });
 
@@ -66,6 +72,11 @@ Route::post('/register', [RegisterController::class, 'register']);
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('/statistics', [StatisticsController::class, 'index'])->name('statistics');
+
+    Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
+    Route::post('/subscriptions/{order}/approve', [SubscriptionController::class, 'approve'])->name('subscriptions.approve');
+
+    Route::post('/programs/cart-requests/{orderItem}/assign', [AdminProgramController::class, 'assignCartRequest'])->name('programs.cart-requests.assign');
 
     Route::resource('users', AdminUserController::class);
     Route::resource('programs', AdminProgramController::class);

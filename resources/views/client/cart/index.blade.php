@@ -63,7 +63,7 @@
                         @endphp
                         @foreach ($recommended as $p)
                             @php
-                                $img = $p->image ? asset('storage/'.$p->image) : null;
+                                $img = $p->publicImageUrl();
                             @endphp
                             <div class="flex gap-4 rounded-xl border border-zinc-100 bg-white p-4">
                                 <div class="h-20 w-20 overflow-hidden rounded-lg bg-zinc-100">

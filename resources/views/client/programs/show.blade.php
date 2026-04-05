@@ -11,12 +11,9 @@
                 $youtubeId = $m[1];
             }
         }
-        $heroCover = null;
-        if ($program->image) {
-            $heroCover = \Illuminate\Support\Str::startsWith($program->image, ['http://', 'https://'])
-                ? $program->image
-                : asset('storage/'.$program->image);
-        } elseif ($youtubeId) {
+        $resourceHttpLink = $program->externalHttpImageField();
+        $heroCover = $program->heroOrCardImageUrl();
+        if (! $heroCover && $youtubeId) {
             $heroCover = 'https://img.youtube.com/vi/'.$youtubeId.'/hqdefault.jpg';
         }
     @endphp
@@ -31,6 +28,21 @@
         </nav>
 
         <div class="mt-8 overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/40">
+            @if ($program->imageFieldIsNonDisplayableHttpResource() && $resourceHttpLink)
+                <div class="border-b border-white/10 bg-zinc-900/80 px-6 py-3 sm:px-8">
+                    <a
+                        href="{{ $resourceHttpLink }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-2 text-sm font-semibold text-[#a3ff12] underline decoration-[#a3ff12]/40 underline-offset-2 hover:text-[#b8ff4d]"
+                    >
+                        <svg class="size-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                        </svg>
+                        Ouvrir le lien du programme (document)
+                    </a>
+                </div>
+            @endif
             @if ($heroCover)
                 <div class="relative aspect-[21/9] max-h-72 w-full overflow-hidden bg-zinc-800 sm:aspect-[2.4/1]">
                     <img
@@ -67,6 +79,16 @@
                             >
                                 Ajouter au panier
                             </button>
+                            @if (!empty($assignedProgramPdfLink))
+                                <a
+                                    href="{{ $assignedProgramPdfLink }}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="inline-flex items-center justify-center rounded-xl border border-[#a3ff12]/50 bg-[#a3ff12]/10 px-4 py-2 text-xs font-extrabold text-[#a3ff12] transition hover:bg-[#a3ff12]/20"
+                                >
+                                    Programme complet (PDF)
+                                </a>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -96,6 +118,16 @@
                         >
                             Ajouter au panier
                         </button>
+                        @if (!empty($assignedProgramPdfLink))
+                            <a
+                                href="{{ $assignedProgramPdfLink }}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="inline-flex items-center justify-center rounded-xl border border-[#a3ff12]/50 bg-[#a3ff12]/10 px-4 py-2 text-xs font-extrabold text-[#a3ff12] transition hover:bg-[#a3ff12]/20"
+                            >
+                                Programme complet (PDF)
+                            </a>
+                        @endif
                     </div>
                 </div>
             @endif
@@ -105,61 +137,69 @@
                     <h2 class="text-sm font-semibold uppercase tracking-wide text-zinc-500">Présentation</h2>
 
                     @if ($program->slug === 'programme-nutrition-sportive')
-                        @php
-                            $nutrition = trim((string) $program->description);
-                            $lines = preg_split('/\r\n|\n|\r/', $nutrition) ?: [];
-
-                            $headingPrefixes = ['💪', '🎯', '🍳', '🍗', '🥤', '🏋️', '🍽️', '🌙', '📊'];
-                            $sections = [];
-                            $currentHeading = null;
-                            $currentItems = [];
-
-                            foreach ($lines as $line) {
-                                $t = trim((string) $line);
-                                if ($t === '') {
-                                    continue;
-                                }
-
-                                $isHeading = false;
-                                foreach ($headingPrefixes as $prefix) {
-                                    if (str_starts_with($t, $prefix)) {
-                                        $isHeading = true;
-                                        break;
-                                    }
-                                }
-
-                                if ($isHeading) {
-                                    if ($currentHeading !== null) {
-                                        $sections[] = ['heading' => $currentHeading, 'items' => $currentItems];
-                                    }
-                                    $currentHeading = $t;
-                                    $currentItems = [];
-                                } else {
-                                    $currentItems[] = $t;
-                                }
-                            }
-
-                            if ($currentHeading !== null) {
-                                $sections[] = ['heading' => $currentHeading, 'items' => $currentItems];
-                            }
-                        @endphp
-
                         <div class="mt-3 rounded-xl border border-white/10 bg-zinc-950/20 p-6">
-                            <div class="space-y-6">
-                                @foreach ($sections as $section)
+                            @if (session('status'))
+                                <div class="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-200">
+                                    {{ session('status') }}
+                                </div>
+                            @endif
+                            @if (session('error'))
+                                <div class="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-200">
+                                    {{ session('error') }}
+                                </div>
+                            @endif
+
+                            @auth
+                                <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div>
-                                        <h3 class="text-base font-bold tracking-tight text-white">{{ $section['heading'] }}</h3>
-                                        @if (!empty($section['items']))
-                                            <ul class="mt-3 list-disc space-y-1.5 pl-6 text-zinc-300">
-                                                @foreach ($section['items'] as $item)
-                                                    <li>{{ $item }}</li>
-                                                @endforeach
-                                            </ul>
-                                        @endif
+                                        <p class="text-sm font-semibold text-white">Conseils nutrition spéciaux</p>
+                                        <p class="mt-1 text-xs text-zinc-400">Cliquez pour ajouter la demande au panier puis validez votre commande.</p>
                                     </div>
-                                @endforeach
-                            </div>
+                                    <button
+                                        type="button"
+                                        class="add-to-cart inline-flex items-center justify-center rounded-xl bg-[#a3ff12] px-4 py-2 text-xs font-extrabold text-[#0a0b0d] transition hover:bg-[#b8ff4d]"
+                                        data-slug="demande-conseil-special-nutrition"
+                                        data-title="Demande conseil nutrition special"
+                                        data-price="0"
+                                        data-image=""
+                                    >
+                                        Demander un conseil spécial
+                                    </button>
+                                </div>
+                            @endauth
+
+                            @guest
+                                <div class="mb-6 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-300">
+                                    Connectez-vous pour demander un conseil nutrition spécial.
+                                </div>
+                            @endguest
+
+                            @if (isset($nutritionTips) && $nutritionTips->count() > 0)
+                                <div class="space-y-6">
+                                    @foreach ($nutritionTips as $tip)
+                                        <div>
+                                            <h3 class="text-base font-bold tracking-tight text-white">{{ $tip->title }}</h3>
+                                            <p class="mt-3 whitespace-pre-wrap leading-relaxed text-zinc-300">{{ $tip->content }}</p>
+                                            @if (!empty($tip->image))
+                                                <a
+                                                    href="{{ $tip->image }}"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    class="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#a3ff12]/40 bg-[#a3ff12]/10 px-3 py-1.5 text-xs font-semibold text-[#a3ff12] hover:bg-[#a3ff12]/20"
+                                                >
+                                                    Ouvrir le PDF
+                                                </a>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <p class="text-sm text-zinc-400">
+                                    Aucun conseil nutrition pour le moment. Ajoute-en depuis l’admin.
+                                </p>
+                            @endif
                         </div>
+
                     @else
                         <p class="mt-3 whitespace-pre-wrap leading-relaxed text-zinc-300">{{ $program->description }}</p>
                     @endif
@@ -232,6 +272,52 @@
                             </div>
                         </article>
                     @endforeach
+                </div>
+            </div>
+        @elseif (! empty($program->video_url))
+            @php
+                $adminVideoUrl = (string) $program->video_url;
+                $adminVideoEmbed = null;
+                if (preg_match('/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{10,15})/', $adminVideoUrl, $am)) {
+                    $adminVideoEmbed = 'https://www.youtube.com/embed/'.$am[1];
+                }
+            @endphp
+            <div class="mt-12">
+                <h2 class="text-xl font-semibold text-white">Vidéos du programme</h2>
+                <p class="mt-1 text-sm text-zinc-500">Vidéo définie depuis l’administration.</p>
+
+                <div class="mt-6">
+                    <article class="flex max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/40 backdrop-blur">
+                        <div class="p-4">
+                            <h3 class="text-sm font-semibold text-white">{{ $program->title }}</h3>
+                            <p class="mt-1 text-xs text-zinc-400">Lecture intégrée</p>
+                        </div>
+                        @if ($adminVideoEmbed)
+                            <div class="border-t border-white/5 bg-black/20">
+                                <div class="relative aspect-video w-full overflow-hidden">
+                                    <iframe
+                                        class="absolute inset-0 h-full w-full"
+                                        src="{{ $adminVideoEmbed }}"
+                                        title="Vidéo — {{ $program->title }}"
+                                        loading="lazy"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowfullscreen
+                                    ></iframe>
+                                </div>
+                            </div>
+                        @else
+                            <div class="border-t border-white/5 px-4 py-4">
+                                <a
+                                    href="{{ $adminVideoUrl }}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="inline-flex items-center gap-2 text-sm font-semibold text-[#a3ff12] underline decoration-[#a3ff12]/40 underline-offset-2 hover:text-[#b8ff4d]"
+                                >
+                                    Ouvrir la vidéo
+                                </a>
+                            </div>
+                        @endif
+                    </article>
                 </div>
             </div>
         @else

@@ -6,6 +6,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -111,6 +112,18 @@ class User extends Authenticatable
     public function progresses(): HasMany
     {
         return $this->hasMany(Progress::class);
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function subscribedPrograms(): BelongsToMany
+    {
+        return $this->belongsToMany(Program::class)
+            ->withPivot('order_id', 'pdf_link')
+            ->withTimestamps();
     }
 
     public function isAdmin(): bool
